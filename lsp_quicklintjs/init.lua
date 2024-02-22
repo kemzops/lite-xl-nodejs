@@ -27,21 +27,26 @@ local executionCommand = { nodeModule .. binaryName, "--lsp-server" }
 -- IF THERE IS NO NEW UPDATE, NPM WILL SKIP & EXIT WITHOUT INSTALLING THE MODULE AGAIN (NO NEED TO).
 core.add_thread(function()
   -- THE MAIN NPM PROCESS (EDIT THE FLAGS TO SUIT THE PACKAGE)
+  core.log("[NPM] Installing/Updating " .. packageName .. " ...")
   local proc = process.start ({ "npm", "install", packageName, "--save-dev", "--save-exact", "--prefix", pluginDirPath })
-  core.log("[NPM] Installing/Updating " .. packageName)
   while proc:running() do
     coroutine.yield()
   end
-  core.log("[NPM] " .. packageName .. " Up to date & Ready to be used.")
 
-  lsp.add_server(common.merge({
-    name = pluginName,
-    language = "javascript",
-    file_patterns = { "%.js$", "%.mjs$", "%.cjs$" },
-    command = executionCommand,
-    id_not_extension = true,
-    verbose = true
-  }, config.plugins[pluginName] or {}))
+  if proc:returncode() == 0  then
+    core.log("[NPM] " .. packageName .. " Up to date & Ready to be used.")
 
-  lsp.start_servers() -- TO MAKE SURE THE LSP WILL BE STARTED IF ITS NOT INSTALLED ON THE FIRST LAUNCH OR FAILED TO START
+    lsp.add_server(common.merge({
+      name = pluginName,
+      language = "javascript",
+      file_patterns = { "%.js$", "%.mjs$", "%.cjs$" }, -- DEFAULT CAN CHANGE/ADD MORE - https://quick-lint-js.com/docs/
+      command = executionCommand,
+      id_not_extension = true,
+      verbose = false
+    }, config.plugins[pluginName] or {}))
+
+    lsp.start_servers() -- MAKE SURE THE LSP WILL BE STARTED IF ITS NOT INSTALLED ON THE FIRST LAUNCH OR FAILED TO START
+  else
+    core.warn("[NPM] Exit with return code != 0, Something went wrong.")
+  end
 end)
