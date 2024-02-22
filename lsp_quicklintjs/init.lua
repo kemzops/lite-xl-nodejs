@@ -33,14 +33,15 @@ core.add_thread(function()
     coroutine.yield()
   end
   core.log("[NPM] " .. packageName .. " Up to date & Ready to be used.")
+
+  lsp.add_server(common.merge({
+    name = pluginName,
+    language = "javascript",
+    file_patterns = { "%.js$", "%.mjs$", "%.cjs$" },
+    command = executionCommand,
+    id_not_extension = true,
+    verbose = true
+  }, config.plugins[pluginName] or {}))
+
   lsp.start_servers() -- TO MAKE SURE THE LSP WILL BE STARTED IF ITS NOT INSTALLED ON THE FIRST LAUNCH OR FAILED TO START
 end)
-
-lsp.add_server(common.merge({
-  name = pluginName,
-  language = "javascript",
-  file_patterns = { "%.js$", "%.mjs$", "%.cjs$" },
-  command = executionCommand,
-  id_not_extension = true,
-  verbose = true
-}, config.plugins[pluginName] or {}))
